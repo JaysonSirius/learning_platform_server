@@ -16,7 +16,7 @@
 #include "sys_capability.h"
 #include "task_manage/task_manage.h"
 #include "sdk_net/sdk_network/sdk_network.h"
-#include "sdk_net/sdk_network/sdk_midware.h"
+#include "sdk_net/sdk_network/sdk_midware_manage.h"
 #ifdef DEBUG
 #include "sdk_net/sdk_tree/sdk_tree_do.h"
 #endif
@@ -330,7 +330,7 @@ struct app_module_config AppModuleManager::app_modules_[OS_SYS_MAX_APP_MODULES] 
 // sdk中间件注册
 static void register_sdk_midwares(void)
 {
-	SDK_IMPORT_MIDWARE(user_manange_midware_do, true);
+	SDK_IMPORT_MIDWARE(user_manange_midware_do, "user_manange_midware", true);
 	// TODO:记录访问者，ip，端口，时间(),json格式
 }
 

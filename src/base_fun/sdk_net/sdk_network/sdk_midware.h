@@ -13,18 +13,34 @@
 
 #include "sdk_interface.h"
 
+using namespace insider::sdk;
+
 // sdk中间件处理
-using sdk_midware = bool (*)(struct sdk_net_interface &sdk_interface, const insider::sdk::Sdk &sdk_req, insider::sdk::Sdk &sdk_res);
+using sdk_midware_fn = bool (*)(struct sdk_net_interface &sdk_interface, const Sdk &sdk_req, Sdk &sdk_res);
 
-void _register_sdk_midware(const char *name, sdk_midware midware_fn, bool enable);
+class ISdkMidWare
+{
+private:
+	std::string name_;			///< 中间件名称
+	bool enable_;				///< 使能
+	sdk_midware_fn fn_;			///< 处理接口(该接口优先级更高)
 
-// 中间件注册
-#define resgister_sdk_midware(midware_fn, enable) _register_sdk_midware(#midware_fn, midware_fn, enable)
+public:
+	ISdkMidWare(const std::string &name, const bool &enable, sdk_midware_fn fn = nullptr)
+		: name_(name), enable_(enable), fn_(fn) {}
+	virtual ~ISdkMidWare() {}
 
-#define SDK_IMPORT_MIDWARE(midware, enable) extern bool midware(struct sdk_net_interface &sdk_interface, const insider::sdk::Sdk &sdk_req, insider::sdk::Sdk &sdk_res);\
-											resgister_sdk_midware(midware, enable)
+	// 中间件是否使能
+	virtual bool is_enable(void) const;
+	// 中间件是否匹配
+	virtual bool is_match(const std::string &name) const;
+	// 中间件名称
+	virtual const std::string &name(void) const;
 
-// 中间件处理
-bool sdk_midware_do(struct sdk_net_interface &sdk_interface, const insider::sdk::Sdk &sdk_req, insider::sdk::Sdk &sdk_res);
+	// 仿函数，子类可重写该方法用于处理自身逻辑，
+	// 如果不重写该方法则不会发生任何事情
+	virtual bool operator () 
+		(struct sdk_net_interface &sdk_interface, const Sdk &sdk_req, Sdk &sdk_res) const;
+};
 
 #endif // !__SDK_MIDWARE_H__

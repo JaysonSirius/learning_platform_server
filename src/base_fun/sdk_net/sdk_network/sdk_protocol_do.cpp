@@ -19,7 +19,7 @@
 #include "tools_func/calculate_crc16.h"
 #include "../sdk_tree/sdk_tree_do.h"
 #include "sdk_protocol_do.h"
-#include "sdk_midware.h"
+#include "sdk_midware_do.h"
 
 using namespace insider::sdk;
 

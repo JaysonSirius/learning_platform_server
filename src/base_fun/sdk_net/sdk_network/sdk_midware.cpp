@@ -14,140 +14,29 @@
 #include <easylogger/easylogger_setup.h>
 #include "sdk_midware.h"
 
-using namespace insider::sdk;
-
-// 中间件管理
-class SdkMidWareManager {
-public:
-	struct midware {
-		std::string name_;			///< 中间件名称
-		sdk_midware midware_;		///< 中间件
-		bool enable_;				///< 使能
-	};
-
-	SdkMidWareManager () {};
-
-	~SdkMidWareManager() {
-		midwares_.clear();
-	}
-
-	// 注册中间件
-	void register_midware(const char *name, sdk_midware midware_fn, bool enable);
-
-	// 处理中间件
-	bool proc_midwares(struct sdk_net_interface &sdk_interface, const Sdk &sdk_req, Sdk &sdk_res) const;
-
-	// 中间件是否存在
-	bool is_midware_exist(const std::string &name);
-
-private:
-	// 中间件列表
-	std::vector<std::shared_ptr<struct midware>> midwares_;
-};
-
-// 中间件管理器
-static SdkMidWareManager midware_mannager;
-
-/**
- * @brief 注册中间件
- * 
- * @param name 名称
- * @param midware_fn 中间件接口
- * @param enable 使能
- */
-void SdkMidWareManager::register_midware(const char *name, sdk_midware midware_fn, bool enable)
+// 中间件是否使能
+bool ISdkMidWare::is_enable(void) const
 {
-	std::string midware_name(name);
-
-	if (is_midware_exist(midware_name))
-	{
-		log_i("midware %s exist\n", name);
-		return ;
-	}
-
-	std::shared_ptr<struct midware> _midware(new struct midware);
-
-	_midware->name_ = midware_name;
-	_midware->midware_ = midware_fn;
-	_midware->enable_ = enable;
-
-	midwares_.push_back(std::move(_midware));
+	return enable_;
 }
 
-/**
- * @brief 处理中间件
- * 
- * @param type sdk网络数据类型
- * @param req sdk数据包原始数据请求
- * @param sdk_req sdk请求协议数据
- * @param sdk_res sdk应答协议数据
- * @return true 成功
- * @return false 失败
- */
-bool SdkMidWareManager::proc_midwares(struct sdk_net_interface &sdk_interface, const Sdk &sdk_req, Sdk &sdk_res) const
+// 中间件是否匹配
+bool ISdkMidWare::is_match(const std::string &name) const
 {
-	for (auto &item : midwares_)
-	{
-		if (!item->midware_ || !item->enable_) { continue; }
+	return name == name_;
+}
 
-		if (!item->midware_(sdk_interface, sdk_req, sdk_res))
-		{
-			log_d("proc midware %s failed\n", item->name_.c_str());
+// 中间件名称
+const std::string &ISdkMidWare::name(void) const
+{
+	return name_;
+}
 
-			sdk_set_result(ResponseResult::ERROR, "error module : " + item->name_, sdk_res);
-
-			// 一个中间件处理失败不再向后传递
-			return false;
-		}
-		
-		log_d("proc midware %s success\n", item->name_.c_str());
-	}
-
+// 仿函数，用于中间件实际处理
+bool ISdkMidWare::operator () 
+		(struct sdk_net_interface &sdk_interface, const insider::sdk::Sdk &sdk_req, insider::sdk::Sdk &sdk_res) const
+{
+	// 如果使用函数注册，则执行函数接口
+	if (fn_) { return fn_(sdk_interface, sdk_req, sdk_res); }
 	return true;
-}
-
-/**
- * @brief 中间件是否存在
- * 
- * @param name 名称
- * @return true 存在
- * @return false 不存在
- */
-bool SdkMidWareManager::is_midware_exist(const std::string &name)
-{
-	for (auto &item : midwares_)
-	{
-		if (name == item->name_)
-		{
-			return true;
-		}
-	}
-	return false;
-}
-
-/**
- * @brief 注册中间件
- * 
- * @param name 名称
- * @param midware_fn 中间件接口
- * @param enable 使能
- */
-void _register_sdk_midware(const char *name, sdk_midware midware_fn, bool enable)
-{
-	midware_mannager.register_midware(name, midware_fn, enable);
-}
-
-/**
- * @brief 处理中间件
- * 
- * @param type sdk网络数据类型
- * @param req sdk数据包原始数据请求
- * @param req_msg sdk请求协议数据
- * @param res_msg sdk应答协议数据
- * @return true 成功
- * @return false 失败
- */
-bool sdk_midware_do(struct sdk_net_interface &sdk_interface, const Sdk &sdk_req, Sdk &sdk_res)
-{
-	return midware_mannager.proc_midwares(sdk_interface, sdk_req, sdk_res);
 }
