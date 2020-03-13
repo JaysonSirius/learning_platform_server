@@ -96,7 +96,7 @@ def protobuf_build(source_dir, debug, install_path):
     os.system("make")
     os.system("make install")
 
-    os.system("python")
+    os.chdir("python")
     os.system("python3 setup.py build")
     os.system("sudo python3 setup.py install")
 

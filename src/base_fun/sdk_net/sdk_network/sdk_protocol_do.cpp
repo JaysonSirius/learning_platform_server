@@ -100,6 +100,7 @@ static bool sdk_header_check_version(const Header &header)
 }
 
 // 网络接口检查
+// FIXME:存在代理、网关等跨网段时是否可能回有问题
 static bool sdk_header_check_net(const Header &header, const struct sdk_net_interface &sdk_interface)
 {
 	// 网络类型匹配
@@ -250,4 +251,3 @@ void sdk_protocol_do(struct sdk_net_interface &sdk_interface, const Sdk &sdk_req
 
 	return ;
 }
-
